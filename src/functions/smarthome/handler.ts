@@ -3,7 +3,7 @@ import {
   DynamoDBClient, UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
-  DynamoDBDocumentClient,
+  DynamoDBDocumentClient, GetCommand,
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
@@ -49,7 +49,7 @@ interface TokenResult {
   refresh_token: string;
   token_type: string;
   expires_in: number;
-  timestamp: number; // unixepoch
+  access_token_timestamp: number; // unixepoch
 }
 
 const LWA_CLIENT_ID = "";
@@ -102,7 +102,7 @@ async function get_lwa_token(client_id: string, client_secret: string, code: str
   }
 
   let ret_json : TokenResult = ret.data;
-  ret_json.timestamp = timestamp;
+  ret_json.access_token_timestamp = timestamp;
 
   return ret_json;
 }
@@ -134,6 +134,93 @@ async function save_token_and_code(uid: string, token_result: TokenResult, code:
   }));
   console.log(ret);
   return;
+}
+
+async function save_token_code(uid: string, token_result: TokenResult) : void {
+  const client = get_dynamodb_doc_client();
+  const ret = await client.send(new UpdateCommand({
+    TableName: ALEXA_USER_INFO_TABLE,
+    Key: {
+      "uid": uid
+    },
+    UpdateExpression: 'set #token_type = :token_type, #access_token = :access_token, #expires_in = :expires_in, #access_token_timestamp = :access_token_timestamp',
+    ExpressionAttributeNames: {
+      '#access_token': 'access_token',
+      '#token_type': 'token_type',
+      '#expires_in': 'expires_in',
+      '#access_token_timestamp': 'access_token_timestamp',
+    },
+    ExpressionAttributeValues: {
+      ':access_token': token_result.refresh_token,
+      ':token_type': token_result.token_type,
+      ':expires_in': token_result.expires_in,
+      ':access_token_timestamp': token_result.access_token_timestamp
+    }
+  }));
+  console.log(ret);
+  return;
+}
+
+async function get_access_token(uid: string) : Promise<string> {
+  const token_result = await get_token_from_db(uid);
+  if(token_result == null) {
+    return null;
+  }
+  if(get_unix_epoch() >= Math.floor(token_result.access_token_timestamp + token_result.expires_in * 8 / 10)) {
+    const new_token_result = await get_lwa_token_using_refresh_token(token_result.refresh_token, LWA_CLIENT_ID, LWA_CLIENT_SECRET);
+    await save_token_code(uid, new_token_result);
+    return new_token_result.access_token;
+  } else {
+    return token_result.access_token;
+  }
+}
+
+async function get_token_from_db(uid: string) : Promise<TokenResult> {
+  const client = get_dynamodb_doc_client();
+
+  try {
+    const ret = await client.send(new GetCommand({
+      TableName: ALEXA_USER_INFO_TABLE,
+      Key: {
+        "uid": uid
+      }
+    }));
+
+    const item = ret.Item;
+
+    return {
+      access_token: item.access_token,
+      refresh_token: item.refresh_token,
+      token_type: item.token_type,
+      expires_in: item.expires_in,
+      access_token_timestamp: item.access_token_timestamp,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function get_lwa_token_using_refresh_token(refresh_token: string, client_id: string, client_secret: string) : Promise<TokenResult> {
+  const data = {
+    grant_type: "refresh_token",
+    refresh_token: refresh_token,
+    client_id: client_id,
+    client_secret: client_secret
+  }
+  const timestamp = get_unix_epoch();
+  const ret = await axios.post(LWA_TOKEN_URI, stringifyForm(data), {
+    headers: LWA_HEADERS
+  })
+  console.log(ret);
+
+  if(ret.status != 200) {
+    return null;
+  }
+
+  let ret_json : TokenResult = ret.data;
+  ret_json.access_token_timestamp = timestamp;
+
+  return ret_json;
 }
 
 function decode_jwt(token: string) : any {
