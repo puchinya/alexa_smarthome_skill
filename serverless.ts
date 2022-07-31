@@ -34,17 +34,61 @@ const serverlessConfiguration: AWS = {
           TableName: "alexaUserInfoTable",
           AttributeDefinitions: [
             {
-              AttributeName: "id",
+              AttributeName: "uid",
               AttributeType: "S"
             },
           ],
           KeySchema: [
             {
-              AttributeName: "id",
+              AttributeName: "uid",
               KeyType: "HASH"
             }
           ],
           BillingMode: "PAY_PER_REQUEST"
+        }
+      },
+
+      lambdaRole: {
+        Type: "AWS::IAM::Role",
+        Properties: {
+          AssumeRolePolicyDocument: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: "Allow",
+                Principal: {
+                  Service: [
+                    "lambda.amazonaws.com"
+                  ]
+                },
+                Action: [
+                  "sts:AssumeRole"
+                ]
+              }
+            ]
+          },
+          ManagedPolicyArns: [
+            "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          ],
+          Policies: [
+            {
+              PolicyName: "invoke-lambda",
+              PolicyDocument: {
+                Version: "2012-10-17",
+                Statement: [
+                  {
+                    Effect: "Allow",
+                    Action: [
+                      "dynamodb:PutItem",
+                      "dynamodb:GetItem",
+                      "dynamodb:UpdateItem",
+                    ],
+                    Resource: "*"
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     }

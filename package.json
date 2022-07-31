@@ -10,9 +10,11 @@
     "node": ">=14.15.0"
   },
   "dependencies": {
-    "@middy/core": "^1.5.2",
-    "@middy/http-json-body-parser": "^1.5.2",
-    "source-map-support": "^0.5.19"
+    "@aws-sdk/client-dynamodb": "3.137.0",
+    "source-map-support": "^0.5.19",
+    "axios": "^0.27.2",
+    "@aws-sdk/lib-dynamodb": "^3.137.0",
+    "jwt-decode": "^3.1.2"
   },
   "devDependencies": {
     "@serverless/typescript": "^2.23.0",

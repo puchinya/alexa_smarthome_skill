@@ -1,10 +1,14 @@
 import 'source-map-support/register';
-
-import type { ValidatedEventAPIGatewayProxyEvent } from '@libs/apiGateway';
-import { formatJSONResponse } from '@libs/apiGateway';
-import { middyfy } from '@libs/lambda';
-
-import schema from './schema';
+import {
+  DynamoDBClient, UpdateItemCommand,
+} from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  UpdateCommand,
+  UpdateCommandInput,
+} from '@aws-sdk/lib-dynamodb'
+import axios from "axios";
+import jwt_decode from 'jwt-decode';
 
 // -*- coding: utf-8 -*-
 
@@ -19,10 +23,128 @@ import schema from './schema';
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific
 // language governing permissions and limitations under the License.
 
+let dynamodb_client : DynamoDBClient = null;
+let dynamodb_doc_client : DynamoDBDocumentClient = null;
+
+const ALEXA_USER_INFO_TABLE = "alexaUserInfoTable";
+
+function get_dynamodb_client() : DynamoDBClient {
+  if(dynamodb_client == null) {
+    dynamodb_client = new DynamoDBClient({});
+  }
+
+  return dynamodb_client;
+}
+
+function get_dynamodb_doc_client() : DynamoDBDocumentClient {
+  if(dynamodb_doc_client == null) {
+    dynamodb_doc_client = DynamoDBDocumentClient.from(get_dynamodb_client());
+  }
+
+  return dynamodb_doc_client;
+}
+
+interface TokenResult {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  timestamp: number; // unixepoch
+}
+
+const LWA_CLIENT_ID = "";
+const LWA_CLIENT_SECRET = "";
+const LWA_TOKEN_URI = "https://api.amazon.com/auth/o2/token";
+const LWA_HEADERS = {
+  "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+};
+
+const ALEXA_URI = "https://api.fe.amazonalexa.com/v3/events" // update to appropriate URI for your region
+const ALEXA_HEADERS = {
+  "Content-Type": "application/json;charset=UTF-8"
+}
+
+function stringifyForm(obj : object) : string {
+  let r = "";
+  let add_and = false;
+  for (const k in obj) {
+    const v = obj[k];
+    if(add_and) {
+      r = r + '&';
+    } else {
+      add_and = true;
+    }
+    r = r + `${k}=${encodeURIComponent(v)}`;
+  }
+
+  return r;
+}
+
+function get_unix_epoch() : number {
+  return Math.floor(new Date().getTime() / 1000);
+}
+
+async function get_lwa_token(client_id: string, client_secret: string, code: string) : Promise<TokenResult> {
+  const data = {
+    grant_type: "authorization_code",
+    code: code,
+    client_id: client_id,
+    client_secret: client_secret
+  }
+  const timestamp = get_unix_epoch();
+  const ret = await axios.post(LWA_TOKEN_URI, stringifyForm(data), {
+    headers: LWA_HEADERS
+  })
+  console.log(ret);
+
+  if(ret.status != 200) {
+    return null;
+  }
+
+  let ret_json : TokenResult = ret.data;
+  ret_json.timestamp = timestamp;
+
+  return ret_json;
+}
+
+async function save_token_and_code(uid: string, token_result: TokenResult, code: string) : void {
+  const client = get_dynamodb_doc_client();
+  const ret = await client.send(new UpdateCommand({
+    TableName: ALEXA_USER_INFO_TABLE,
+    Key: {
+      "uid": uid
+    },
+    UpdateExpression: 'set #code = :code, #refresh_token = :refresh_token, #token_type = :token_type, #access_token = :access_token, #expires_in = :expires_in, #access_token_timestamp = :access_token_timestamp',
+    ExpressionAttributeNames: {
+      '#code': 'code',
+      '#refresh_token': 'refresh_token',
+      '#access_token': 'access_token',
+      '#token_type': 'token_type',
+      '#expires_in': 'expires_in',
+      '#access_token_timestamp': 'access_token_timestamp',
+    },
+    ExpressionAttributeValues: {
+      ':code': code,
+      ':refresh_token': token_result.refresh_token,
+      ':access_token': token_result.refresh_token,
+      ':token_type': token_result.token_type,
+      ':expires_in': token_result.expires_in,
+      ':access_token_timestamp': token_result.timestamp
+    }
+  }));
+  console.log(ret);
+  return;
+}
+
+function decode_jwt(token: string) : any {
+  const ret = jwt_decode(token)
+  return ret;
+}
+
 const smarthome = async (request, context) => {
   if (request.directive.header.namespace === 'Alexa.Discovery' && request.directive.header.name === 'Discover') {
     log("DEBUG:", "Discover request",  JSON.stringify(request));
-    handleDiscovery(request, context, "");
+    handleDiscovery(request, context);
   }
   else if (request.directive.header.namespace === 'Alexa.PowerController') {
     if (request.directive.header.name === 'TurnOn' || request.directive.header.name === 'TurnOff') {
@@ -31,14 +153,26 @@ const smarthome = async (request, context) => {
     }
   }
   else if (request.directive.header.namespace === 'Alexa.Authorization' && request.directive.header.name === 'AcceptGrant') {
-    handleAuthorization(request, context)
+    await handleAuthorization(request, context)
   }
 
-  function handleAuthorization(request, context) {
+  async function handleAuthorization(request, context) {
     // Send the AcceptGrant response
-    var payload = {};
-    var header = request.directive.header;
+    let payload = {};
+    const header = request.directive.header;
     header.name = "AcceptGrant.Response";
+    console.log(JSON.stringify(request));
+
+    const requestToken = request.directive.payload.grantee.token;
+    const jwt = decode_jwt(requestToken);
+    console.log(jwt);
+    const uid : string = jwt.sub;
+
+    const code = request["directive"]["payload"]["grant"]["code"];
+    const token_result = await get_lwa_token(LWA_CLIENT_ID, LWA_CLIENT_SECRET, code)
+
+    await save_token_and_code(uid, token_result, code);
+
     log("DEBUG", "AcceptGrant Response: ", JSON.stringify({ header: header, payload: payload }));
     context.succeed({ event: { header: header, payload: payload } });
   }
@@ -78,7 +212,8 @@ const smarthome = async (request, context) => {
                         "supported": [{
                           "name": "powerState"
                         }],
-                        "retrievable": true
+                        "proaciveReport": true,
+                        "retrievable": true,
                       }
                     },
                     {
