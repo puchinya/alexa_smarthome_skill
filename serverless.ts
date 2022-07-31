@@ -15,7 +15,7 @@ const serverlessConfiguration: AWS = {
   provider: {
     name: 'aws',
     stage: 'prod',
-    region: 'us-west-2',
+    region: 'ap-northeast-1',
     profile: 'default',
     runtime: 'nodejs14.x',
     environment: {
@@ -25,6 +25,30 @@ const serverlessConfiguration: AWS = {
   },
   // import the function via paths
   functions: { smarthome },
+
+  resources: {
+    Resources: {
+      alexaUserInfoTable: {
+        Type: "AWS::DynamoDB::Table",
+        Properties: {
+          TableName: "alexaUserInfoTable",
+          AttributeDefinitions: [
+            {
+              AttributeName: "id",
+              AttributeType: "S"
+            },
+          ],
+          KeySchema: [
+            {
+              AttributeName: "id",
+              KeyType: "HASH"
+            }
+          ],
+          BillingMode: "PAY_PER_REQUEST"
+        }
+      }
+    }
+  }
 };
 
 module.exports = serverlessConfiguration;
