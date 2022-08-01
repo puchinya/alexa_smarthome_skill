@@ -1,4 +1,4 @@
-import 'source-map-support/register';
+//import 'source-map-support/register';
 import {
     LambdaClient,
     InvokeCommand
@@ -7,29 +7,26 @@ import {
 const FUNCTION_NAME : string = process.env.FUNCTION_NAME;
 const FUNCTION_REGION : string = process.env.FUNCTION_REGION;
 
-let lambda_client = null;
+const lambdaClient = new LambdaClient({
+    region: FUNCTION_REGION
+});
 
-const proxy = async (event, context) : Promise<string> => {
-    if(lambda_client == null) {
-        lambda_client = new LambdaClient({
-            region: FUNCTION_REGION
-        });
-    }
+async function invokeLambda(event) : Promise<any> {
 
-    //console.log(event);
-
-    const ret = await lambda_client.send(new InvokeCommand(
+    const ret = await lambdaClient.send(new InvokeCommand(
         {
             FunctionName: FUNCTION_NAME,
-            Payload: Uint8Array.from(Buffer.from(JSON.stringify(event)))
+            Payload: Buffer.from(JSON.stringify(event))
         }
     ));
 
-    //console.log(ret);
     const payload = Buffer.from(ret.Payload).toString();
-    //console.log(payload);
 
     return JSON.parse(payload);
+}
+
+const proxy = async (event, context) : Promise<string> => {
+    return await invokeLambda(event);
 };
 
 export const main = proxy;
