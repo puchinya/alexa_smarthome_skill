@@ -25,7 +25,7 @@ async function invokeLambda(event) : Promise<any> {
     return JSON.parse(payload);
 }
 
-const proxy = async (event, context) : Promise<string> => {
+const proxy = async (event) : Promise<string> => {
     return await invokeLambda(event);
 };
 

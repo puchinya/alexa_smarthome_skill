@@ -12,7 +12,7 @@ module.exports = {
   context: __dirname,
   mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
   entry: slsw.lib.entries,
-  devtool: slsw.lib.webpack.isLocal ? 'eval-cheap-module-source-map' : 'source-map',
+  devtool: undefined,
   resolve: {
     extensions: ['.mjs', '.json', '.ts'],
     symlinks: false,
@@ -29,7 +29,8 @@ module.exports = {
     filename: '[name].js',
   },
   optimization: {
-    concatenateModules: false,
+    minimize: true,
+    noEmitOnErrors: true,
   },
   target: 'node',
   externals: [nodeExternals()],
