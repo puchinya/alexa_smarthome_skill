@@ -4,7 +4,7 @@ import smarthome from '@functions/smarthome';
 
 const serverlessConfiguration: AWS = {
   service: 'alexa-smarthome-skill',
-  frameworkVersion: '2',
+  frameworkVersion: '3',
   custom: {
     webpack: {
       webpackConfig: './webpack.config.js',
@@ -17,7 +17,7 @@ const serverlessConfiguration: AWS = {
     stage: 'prod',
     region: 'ap-northeast-1',
     profile: 'default',
-    runtime: 'nodejs14.x',
+    runtime: 'nodejs16.x',
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
     },
@@ -31,7 +31,7 @@ const serverlessConfiguration: AWS = {
       alexaUserInfoTable: {
         Type: "AWS::DynamoDB::Table",
         Properties: {
-          TableName: "alexaUserInfoTable",
+          TableName: "alexa_lwa_token_table",
           AttributeDefinitions: [
             {
               AttributeName: "uid",

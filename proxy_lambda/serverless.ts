@@ -4,7 +4,7 @@ import proxy_lambda from '@functions/proxy_lambda';
 
 const serverlessConfiguration: AWS = {
   service: 'proxy-lambda',
-  frameworkVersion: '2',
+  frameworkVersion: '3',
   custom: {
     webpack: {
       webpackConfig: './webpack.config.js',
@@ -17,7 +17,7 @@ const serverlessConfiguration: AWS = {
     stage: 'prod',
     region: 'us-west-2',
     profile: 'default',
-    runtime: 'nodejs14.x',
+    runtime: 'nodejs16.x',
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
     },

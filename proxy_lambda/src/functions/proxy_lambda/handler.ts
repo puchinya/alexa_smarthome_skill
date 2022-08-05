@@ -20,7 +20,7 @@ async function invokeLambda(event) : Promise<any> {
         }
     ));
 
-    const payload = Buffer.from(ret.Payload).toString();
+    const payload = Buffer.from(ret.Payload).toString('utf-8');
 
     return JSON.parse(payload);
 }

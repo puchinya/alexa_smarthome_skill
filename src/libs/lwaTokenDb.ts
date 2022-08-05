@@ -5,7 +5,7 @@ import {getCurrentTimestamp, getLwaTokenByCode, getLwaTokenByRefreshToken, Token
 const LWA_CLIENT_ID = process.env.LWA_CLIENT_ID;
 const LWA_CLIENT_SECRET = process.env.LWA_CLIENT_SECRET;
 
-const ALEXA_USER_INFO_TABLE = "alexaUserInfoTable";
+const ALEXA_USER_INFO_TABLE = "alexa_lwa_token_table";
 
 async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<void> {
     const client = getDynamoDbDocClient();
