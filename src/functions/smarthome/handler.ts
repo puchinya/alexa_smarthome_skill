@@ -140,7 +140,7 @@ function handleDiscovery(request, context) : any {
   const header = request.directive.header;
   header.name = "Discover.Response";
   log("DEBUG", "Discovery Response: ", JSON.stringify({ header: header, payload: payload }));
-  return { header: header, payload: payload };
+  return { event: { header: header, payload: payload } };
 }
 
 function handlePowerControl(request: AlexaSmartHomeSkillRequest, context) : any {
