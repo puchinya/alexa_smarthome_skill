@@ -34,6 +34,9 @@ module.exports = {
   },
   target: 'node',
   externals: [nodeExternals()],
+  externalsPresets: {
+    node: true
+  },
   module: {
     rules: [
       // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`

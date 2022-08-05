@@ -11,7 +11,7 @@ const lambdaClient = new LambdaClient({
     region: FUNCTION_REGION
 });
 
-async function invokeLambda(event) : Promise<any> {
+export async function main(event) : Promise<any> {
 
     const ret = await lambdaClient.send(new InvokeCommand(
         {
@@ -24,9 +24,3 @@ async function invokeLambda(event) : Promise<any> {
 
     return JSON.parse(payload);
 }
-
-const proxy = async (event) : Promise<string> => {
-    return await invokeLambda(event);
-};
-
-export const main = proxy;
