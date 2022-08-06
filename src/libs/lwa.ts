@@ -24,7 +24,7 @@ export function getCurrentTimestamp() : number {
  * @param client_secret
  * @param code
  */
-export async function getLwaTokenByCode(client_id: string, client_secret: string, code: string) : Promise<TokenResult> {
+export async function getLwaTokenByCodeAsync(client_id: string, client_secret: string, code: string) : Promise<TokenResult> {
     const data = {
         grant_type: "authorization_code",
         code: code,
@@ -57,7 +57,7 @@ export async function getLwaTokenByCode(client_id: string, client_secret: string
  * @param client_id
  * @param client_secret
  */
-export async function getLwaTokenByRefreshToken(refresh_token: string, client_id: string, client_secret: string)
+export async function getLwaTokenByRefreshTokenAsync(refresh_token: string, client_id: string, client_secret: string)
     : Promise<TokenResult> {
     const data = {
         grant_type: "refresh_token",

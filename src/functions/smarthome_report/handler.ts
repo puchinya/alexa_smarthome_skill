@@ -1,5 +1,5 @@
 import {alexaNotifyChangeReportEventAsync} from "@libs/alexaSmarthomeReport";
-import {setDeviceStatus} from "@libs/deviceDb";
+import {setDeviceStatusAsync} from "@libs/deviceDb";
 
 interface ReportEvent {
     uid: string
@@ -10,7 +10,7 @@ const smarthome_report = async (event: ReportEvent, context) : Promise<any> => {
 
     const endpointId = "sample-bulb-01";
 
-    setDeviceStatus(event.uid, endpointId,
+    await setDeviceStatusAsync(event.uid, endpointId,
         {
             "powerState": event.state
         })
@@ -27,9 +27,9 @@ const smarthome_report = async (event: ReportEvent, context) : Promise<any> => {
         }
     ];
 
-    const response = await alexaNotifyChangeReportEventAsync(event.uid, endpointId, properties, []);
+    await alexaNotifyChangeReportEventAsync(event.uid, endpointId, properties, []);
 
-    return response;
+    return { status: "OK" };
 }
 
 export const main = smarthome_report;

@@ -1,6 +1,6 @@
 import {getDynamoDbDocClient} from "@libs/dynamoDbSingleton";
 import {GetCommand, UpdateCommand} from "@aws-sdk/lib-dynamodb";
-import {getCurrentTimestamp, getLwaTokenByCode, getLwaTokenByRefreshToken, TokenResult} from "@libs/lwa";
+import {getCurrentTimestamp, getLwaTokenByCodeAsync, getLwaTokenByRefreshTokenAsync, TokenResult} from "@libs/lwa";
 
 const LWA_CLIENT_ID = process.env.LWA_CLIENT_ID;
 const LWA_CLIENT_SECRET = process.env.LWA_CLIENT_SECRET;
@@ -12,7 +12,7 @@ const ALEXA_USER_INFO_TABLE = "alexa_lwa_token_table";
  * @param uid
  * @param tokenResult
  */
-async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<void> {
+async function saveLwaTokenAsync(uid: string, tokenResult: TokenResult) : Promise<void> {
     const client = getDynamoDbDocClient();
     const ret = await client.send(new UpdateCommand({
         TableName: ALEXA_USER_INFO_TABLE,
@@ -44,10 +44,10 @@ async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<voi
  * @param uid
  * @param code
  */
-export async function issueLwaTokenByCodeAndSaveToDb(uid: string, code: string) : Promise<TokenResult> {
-    const tokenResult = await getLwaTokenByCode(LWA_CLIENT_ID, LWA_CLIENT_SECRET, code)
+export async function issueLwaTokenByCodeAndSaveToDbAsync(uid: string, code: string) : Promise<TokenResult> {
+    const tokenResult = await getLwaTokenByCodeAsync(LWA_CLIENT_ID, LWA_CLIENT_SECRET, code)
 
-    await saveLwaTokenAndCode(uid, tokenResult, code);
+    await saveLwaTokenAndCodeAsync(uid, tokenResult, code);
 
     return  tokenResult;
 }
@@ -58,7 +58,7 @@ export async function issueLwaTokenByCodeAndSaveToDb(uid: string, code: string) 
  * @param tokenResult
  * @param code
  */
-async function saveLwaTokenAndCode(uid: string, tokenResult: TokenResult, code: string) : Promise<void> {
+async function saveLwaTokenAndCodeAsync(uid: string, tokenResult: TokenResult, code: string) : Promise<void> {
     const client = getDynamoDbDocClient();
     const ret = await client.send(new UpdateCommand({
         TableName: ALEXA_USER_INFO_TABLE,
@@ -91,7 +91,7 @@ async function saveLwaTokenAndCode(uid: string, tokenResult: TokenResult, code: 
  *
  * @param uid
  */
-async function getLwaTokenFromDb(uid: string) : Promise<TokenResult> {
+async function getLwaTokenFromDbAsync(uid: string) : Promise<TokenResult> {
 
     try {
         const client = getDynamoDbDocClient();
@@ -122,14 +122,14 @@ async function getLwaTokenFromDb(uid: string) : Promise<TokenResult> {
  * @param uid
  * @param forceRefresh
  */
-export async function getLwaToken(uid: string, forceRefresh: boolean = false) : Promise<TokenResult> {
-    const tokenResult = await getLwaTokenFromDb(uid);
+export async function getLwaTokenAsync(uid: string, forceRefresh: boolean = false) : Promise<TokenResult> {
+    const tokenResult = await getLwaTokenFromDbAsync(uid);
     if(tokenResult == null) {
         return null;
     }
     if(forceRefresh || getCurrentTimestamp() >= Math.floor(tokenResult.access_token_timestamp + tokenResult.expires_in * 8 / 10)) {
-        const new_token_result = await getLwaTokenByRefreshToken(tokenResult.refresh_token, LWA_CLIENT_ID, LWA_CLIENT_SECRET);
-        await saveLwaToken(uid, new_token_result);
+        const new_token_result = await getLwaTokenByRefreshTokenAsync(tokenResult.refresh_token, LWA_CLIENT_ID, LWA_CLIENT_SECRET);
+        await saveLwaTokenAsync(uid, new_token_result);
         return new_token_result;
     } else {
         return tokenResult;

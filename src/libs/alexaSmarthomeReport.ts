@@ -1,4 +1,4 @@
-import {getLwaToken} from "@libs/lwaTokenDb"
+import {getLwaTokenAsync} from "@libs/lwaTokenDb"
 import axios from "axios";
 import {randomUUID} from "crypto";
 import {
@@ -134,7 +134,7 @@ export async function alexaNotifyAsync(uid: string, callback: CreateEventMessage
     const messageId = randomUUID();
 
     while (true) {
-        const lwaToken = await getLwaToken(uid, forceRefreshToken);
+        const lwaToken = await getLwaTokenAsync(uid, forceRefreshToken);
 
         console.log(`token:${lwaToken}`);
 

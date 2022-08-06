@@ -1,12 +1,12 @@
 import 'source-map-support/register';
 
-import {issueLwaTokenByCodeAndSaveToDb} from "@libs/lwaTokenDb"
+import {issueLwaTokenByCodeAndSaveToDbAsync} from "@libs/lwaTokenDb"
 import jwt_decode from 'jwt-decode';
 import {
   AlexaSmartHomeAuthorizationRequest,
   AlexaSmartHomeRequest, AlexaSmartHomeResponse
 } from '@libs/alexaSmartHome'
-import {getDevice, registerDevice, setDeviceStatus} from "@libs/deviceDb";
+import {getDeviceStatusAsync, registerDeviceAsync, setDeviceStatusAsync} from "@libs/deviceDb";
 
 // -*- coding: utf-8 -*-
 
@@ -42,7 +42,7 @@ async function handleAuthorizationAsync(request: AlexaSmartHomeAuthorizationRequ
 
     const code = request.directive.payload.grant.code;
 
-    await issueLwaTokenByCodeAndSaveToDb(uid, code);
+    await issueLwaTokenByCodeAndSaveToDbAsync(uid, code);
 
     log("DEBUG", "AcceptGrant Response: ", JSON.stringify({header: header, payload: payload}));
 
@@ -121,7 +121,7 @@ async function handleDiscoveryAsync(request : AlexaSmartHomeRequest<object>, con
         ]
   };
 
-  await registerDevice(uid, "sample-bulb-01", {
+  await registerDeviceAsync(uid, "sample-bulb-01", {
     "powerState": "OFF"
   });
 
@@ -145,7 +145,7 @@ async function handleReportStateAsync(request: AlexaSmartHomeRequest<object>, co
 
   const endpointId = request.directive.endpoint.endpointId;
 
-  const deviceInfo = await getDevice(uid, endpointId);
+  const deviceInfo = await getDeviceStatusAsync(uid, endpointId);
 
   const properties = [
     {
@@ -215,7 +215,7 @@ async function handlePowerControlAsync(request: AlexaSmartHomeRequest<object>, c
     powerResult = "OFF";
   }
 
-  setDeviceStatus(uid, request.directive.endpoint.endpointId,
+  setDeviceStatusAsync(uid, request.directive.endpoint.endpointId,
       {
         "powerState": powerResult
       })

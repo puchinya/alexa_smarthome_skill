@@ -9,7 +9,7 @@ export interface DeviceInfo {
 
 const ALEXA_DEVICE_STATUS_TABLE = "alexa_device_status_table";
 
-export async function registerDevice(uid: string, endpointId: string, status: object) : Promise<void> {
+export async function registerDeviceAsync(uid: string, endpointId: string, status: object) : Promise<void> {
     const client = getDynamoDbDocClient();
     await client.send(new PutCommand({
         TableName: ALEXA_DEVICE_STATUS_TABLE,
@@ -21,7 +21,7 @@ export async function registerDevice(uid: string, endpointId: string, status: ob
     }));
 }
 
-export async function getDevice(uid: string, endpointId: string) : Promise<DeviceInfo> {
+export async function getDeviceStatusAsync(uid: string, endpointId: string) : Promise<DeviceInfo> {
     const client = getDynamoDbDocClient();
 
     const response = await client.send(new GetCommand({
@@ -41,7 +41,7 @@ export async function getDevice(uid: string, endpointId: string) : Promise<Devic
     }
 }
 
-export async function setDeviceStatus(uid: string, endpointId: string, status: object) : Promise<void> {
+export async function setDeviceStatusAsync(uid: string, endpointId: string, status: object) : Promise<void> {
     const client = getDynamoDbDocClient();
     await client.send(new UpdateCommand({
         TableName: ALEXA_DEVICE_STATUS_TABLE,
