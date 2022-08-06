@@ -49,6 +49,35 @@ const serverlessConfiguration: AWS = {
         }
       },
 
+
+      alexaDeviceStatusTable: {
+        Type: "AWS::DynamoDB::Table",
+        Properties: {
+          TableName: "alexa_device_status_table",
+          AttributeDefinitions: [
+            {
+              AttributeName: "uid",
+              AttributeType: "S"
+            },
+            {
+              AttributeName: "device_id",
+              AttributeType: "S"
+            }
+          ],
+          KeySchema: [
+            {
+              AttributeName: "uid",
+              KeyType: "HASH"
+            },
+            {
+              AttributeName: "device_id",
+              KeyType: "RANGE"
+            }
+          ],
+          BillingMode: "PAY_PER_REQUEST"
+        }
+      },
+
       lambdaRole: {
         Type: "AWS::IAM::Role",
         Properties: {

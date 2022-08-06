@@ -2,6 +2,11 @@ import 'source-map-support/register';
 
 import {issueLwaTokenByCodeAndSaveToDb} from "@libs/lwaTokenDb"
 import jwt_decode from 'jwt-decode';
+import {
+  AlexaSmartHomeAuthorizationRequest,
+  AlexaSmartHomeRequest, AlexaSmartHomeResponse
+} from '@libs/alexaSmartHome'
+import {getDevice, registerDevice, setDeviceStatus} from "@libs/deviceDb";
 
 // -*- coding: utf-8 -*-
 
@@ -25,41 +30,7 @@ function log(message, message1, message2) {
   console.log(message + message1 + message2);
 }
 
-interface AlexaSmartHomeSkillEventHeader {
-  namespace: string;
-  name: string;
-  messageId: string;
-  payloadVersion: string;
-  correlationToken: string;
-}
-
-interface AlexaSmartHomeSkillDirectiveEndpointScope {
-  type: string;
-  token: string;
-}
-
-interface AlexaSmartHomeSkillEventEndpoint {
-  scope: AlexaSmartHomeSkillDirectiveEndpointScope;
-  endpointId: string;
-  cookie: object;
-}
-
-interface AlexaSmartHomeSkillRequestEvent {
-  header: AlexaSmartHomeSkillEventHeader;
-  endpoint: AlexaSmartHomeSkillEventEndpoint;
-  payload: any;
-}
-
-interface AlexaSmartHomeSkillRequest {
-  directive: AlexaSmartHomeSkillRequestEvent;
-}
-
-interface AlexaSmartHomeSkillResponse {
-  event: AlexaSmartHomeSkillRequestEvent;
-  context: any;
-}
-
-async function handleAuthorization(request, context) : Promise<any> {
+async function handleAuthorization(request: AlexaSmartHomeAuthorizationRequest, context) : Promise<any> {
   // Send the AcceptGrant response
   const header = request.directive.header;
   header.name = "AcceptGrant.Response";
@@ -85,7 +56,12 @@ async function handleAuthorization(request, context) : Promise<any> {
   }
 }
 
-function handleDiscovery(request, context) : any {
+async function handleDiscovery(request : AlexaSmartHomeRequest<object>, context) : Promise<any> {
+
+  const requestToken = request.directive.payload.scope.token;
+  const jwt = decodeJwt(requestToken);
+  const uid: string = jwt.sub;
+
   // Send the discovery response
   const payload = {
     "endpoints":
@@ -144,21 +120,87 @@ function handleDiscovery(request, context) : any {
           }
         ]
   };
+
+  await registerDevice(uid, "sample-bulb-01", {
+    "powerState": "OFF"
+  });
+
   const header = request.directive.header;
   header.name = "Discover.Response";
   log("DEBUG", "Discovery Response: ", JSON.stringify({ header: header, payload: payload }));
   return { event: { header: header, payload: payload } };
 }
 
-function handlePowerControl(request: AlexaSmartHomeSkillRequest, context) : any {
+async function handleReportState(request: AlexaSmartHomeRequest<object>, context) : Promise<AlexaSmartHomeResponse<object>> {
+
+  const requestToken = request.directive.endpoint.scope.token;
+  const jwt = decodeJwt(requestToken);
+  const uid: string = jwt.sub;
+
+  const utc = new Date().toISOString();
+
+  let header = request.directive.header;
+  header.name = "StateReport";
+  header.messageId = header.messageId + "-R";
+
+  const endpointId = request.directive.endpoint.endpointId;
+
+  const deviceInfo = await getDevice(uid, endpointId);
+
+  const properties = [
+      {
+    "namespace": "Alexa.PowerController",
+    "name": "powerState",
+    "value": deviceInfo.status["powerState"],
+    "timeOfSample": utc, //retrieve from result.
+    "uncertaintyInMilliseconds": 50
+    },
+    {
+      "namespace": "Alexa.EndpointHealth",
+      "name": "connectivity",
+      "value": {
+        "value": "OK"
+      },
+      "timeOfSample": utc,
+      "uncertaintyInMilliseconds": 0
+    }];
+
+  const response = {
+    event: {
+      header: header,
+      endpoint: {
+        scope: {
+          type: "BearerToken",
+          token: requestToken
+        },
+        endpointId: endpointId
+      },
+      payload: {}
+    },
+    context: {
+      properties: properties
+    }
+  };
+  log("DEBUG", "Discovery Response: ", JSON.stringify(response));
+
+  return response;
+}
+
+async function handlePowerControl(request: AlexaSmartHomeRequest<object>, context) : Promise<any> {
+
+  const requestToken = request.directive.endpoint.scope.token;
+  const jwt = decodeJwt(requestToken);
+  const uid: string = jwt.sub;
+
+  const utc = new Date().toISOString();
+
   // get device ID passed in during discovery
   const requestMethod = request.directive.header.name;
   const responseHeader = request.directive.header;
   responseHeader.namespace = "Alexa";
   responseHeader.name = "Response";
   responseHeader.messageId = responseHeader.messageId + "-R";
-  // get user token pass in request
-  const requestToken = request.directive.endpoint.scope.token;
+
   let powerResult;
 
   if (requestMethod === "TurnOn") {
@@ -172,13 +214,19 @@ function handlePowerControl(request: AlexaSmartHomeSkillRequest, context) : any 
     // powerResult = stubControlFunctionToYourCloud(endpointId, token, request);
     powerResult = "OFF";
   }
+
+  setDeviceStatus(uid, request.directive.endpoint.endpointId,
+      {
+        "powerState": powerResult
+      })
+
   // Return the updated powerState.  Always include EndpointHealth in your Alexa.Response
   const contextResult = {
     "properties": [{
       "namespace": "Alexa.PowerController",
       "name": "powerState",
       "value": powerResult,
-      "timeOfSample": "2017-09-03T16:20:50.52Z", //retrieve from result.
+      "timeOfSample": utc, //retrieve from result.
       "uncertaintyInMilliseconds": 50
     },
       {
@@ -187,7 +235,7 @@ function handlePowerControl(request: AlexaSmartHomeSkillRequest, context) : any 
         "value": {
           "value": "OK"
         },
-        "timeOfSample": "2022-03-09T22:43:17.877738+00:00",
+        "timeOfSample": utc,
         "uncertaintyInMilliseconds": 0
       }]
   };
@@ -210,14 +258,18 @@ function handlePowerControl(request: AlexaSmartHomeSkillRequest, context) : any 
 }
 
 const smarthome = async (request, context) : Promise<any> => {
+  console.log(`request: ${JSON.stringify(request)}`);
   if (request.directive.header.namespace === 'Alexa.Discovery' && request.directive.header.name === 'Discover') {
-    log("DEBUG:", "Discover request",  JSON.stringify(request));
-    return handleDiscovery(request, context);
+    return await handleDiscovery(request, context);
   }
   else if (request.directive.header.namespace === 'Alexa.PowerController') {
     if (request.directive.header.name === 'TurnOn' || request.directive.header.name === 'TurnOff') {
-      log("DEBUG:", "TurnOn or TurnOff Request", JSON.stringify(request));
-      return handlePowerControl(request, context);
+      return await handlePowerControl(request, context);
+    }
+  }
+  else if (request.directive.header.namespace === 'Alexa') {
+    if (request.directive.header.name === 'ReportState') {
+      return await handleReportState(request, context);
     }
   }
   else if (request.directive.header.namespace === 'Alexa.Authorization' &&
