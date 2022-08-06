@@ -18,6 +18,12 @@ export function getCurrentTimestamp() : number {
     return Math.floor(new Date().getTime() / 1000);
 }
 
+/**
+ *
+ * @param client_id
+ * @param client_secret
+ * @param code
+ */
 export async function getLwaTokenByCode(client_id: string, client_secret: string, code: string) : Promise<TokenResult> {
     const data = {
         grant_type: "authorization_code",
@@ -26,22 +32,31 @@ export async function getLwaTokenByCode(client_id: string, client_secret: string
         client_secret: client_secret
     }
     const timestamp = getCurrentTimestamp();
-    const response = await axios.post(LWA_TOKEN_URI, stringifyFormData(data), {
-        headers: LWA_HEADERS
-    })
+    try {
+        const response = await axios.post(LWA_TOKEN_URI, stringifyFormData(data), {
+            headers: LWA_HEADERS
+        })
 
-    if(response.status != 200) {
-        return null;
+        console.log(`lwa_token:${JSON.stringify(response.data)}`);
+
+        let result: TokenResult = response.data;
+        result.access_token_timestamp = timestamp;
+
+        return result;
+    } catch (e) {
+        if(axios.isAxiosError(e)) {
+            //
+        }
+        throw e;
     }
-
-    console.log(`lwa_token:${JSON.stringify(response.data)}`);
-
-    let result : TokenResult = response.data;
-    result.access_token_timestamp = timestamp;
-
-    return result;
 }
 
+/**
+ *
+ * @param refresh_token
+ * @param client_id
+ * @param client_secret
+ */
 export async function getLwaTokenByRefreshToken(refresh_token: string, client_id: string, client_secret: string)
     : Promise<TokenResult> {
     const data = {
@@ -51,16 +66,20 @@ export async function getLwaTokenByRefreshToken(refresh_token: string, client_id
         client_secret: client_secret
     }
     const timestamp = getCurrentTimestamp();
-    const ret = await axios.post(LWA_TOKEN_URI, stringifyFormData(data), {
-        headers: LWA_HEADERS
-    })
 
-    if(ret.status != 200) {
-        return null;
+    try {
+        const ret = await axios.post(LWA_TOKEN_URI, stringifyFormData(data), {
+            headers: LWA_HEADERS
+        })
+
+        let result: TokenResult = ret.data;
+        result.access_token_timestamp = timestamp;
+
+        return result;
+    } catch (e) {
+        if(axios.isAxiosError(e)) {
+
+        }
+        throw e;
     }
-
-    let result : TokenResult = ret.data;
-    result.access_token_timestamp = timestamp;
-
-    return result;
 }

@@ -1,5 +1,5 @@
 
-export interface AlexaSmartHomeProperty {
+export type AlexaSmartHomeProperty = {
     namespace: string,
     instance?: string,
     name: string,
@@ -8,11 +8,11 @@ export interface AlexaSmartHomeProperty {
     uncertaintyInMilliseconds: number
 }
 
-export interface AlexaSmartHomeContext {
+export type AlexaSmartHomeContext = {
     properties?: AlexaSmartHomeProperty[];
 }
 
-export interface AlexaSmartHomeHeader {
+export type AlexaSmartHomeHeader = {
     namespace: string;
     name: string;
     messageId: string;
@@ -20,32 +20,32 @@ export interface AlexaSmartHomeHeader {
     payloadVersion: string;
 }
 
-export interface AlexaSmartHomeScope {
+export type AlexaSmartHomeScope = {
     type: string;
     token: string;
     partition?: string;
     userId?: string;
 }
 
-export interface AlexaSmartHomeEndpoint {
+export type AlexaSmartHomeEndpoint = {
     endpointId: string;
     scope?: AlexaSmartHomeScope;
     cookie?: string[];
 }
 
-export interface AlexaSmartHomeEvent<PayloadType> {
+export type AlexaSmartHomeEvent<PayloadType> = {
+    header: AlexaSmartHomeHeader;
+    endpoint?: AlexaSmartHomeEndpoint;
+    payload: PayloadType;
+}
+
+export type AlexaSmartHomeDirective<PayloadType> = {
     header: AlexaSmartHomeHeader;
     endpoint: AlexaSmartHomeEndpoint;
     payload: PayloadType;
 }
 
-export interface AlexaSmartHomeDirective<PayloadType> {
-    header: AlexaSmartHomeHeader;
-    endpoint: AlexaSmartHomeEndpoint;
-    payload: PayloadType;
-}
-
-export interface AlexaSmartHomeRequest<PayloadType> {
+export type AlexaSmartHomeRequest<PayloadType> = {
     directive: AlexaSmartHomeDirective<PayloadType>;
     context: AlexaSmartHomeContext;
 }
@@ -57,9 +57,22 @@ export interface AlexaSmartHomeAuthorizationPayload {
 
 export type AlexaSmartHomeAuthorizationRequest = AlexaSmartHomeRequest<AlexaSmartHomeAuthorizationPayload>;
 
-export interface AlexaSmartHomeResponse<PayloadType> {
+export type AlexaSmartHomeResponse<PayloadType> = {
     event: AlexaSmartHomeEvent<PayloadType>;
-    context: AlexaSmartHomeContext;
+    context?: AlexaSmartHomeContext;
+}
+
+export type AlexaSmartHomeEndpointDescription = {
+    endpointId: string;
+    manufacturerName: string;
+    description: string;
+    friendlyName: string;
+    displayCategories: string[];
+    additionalAttributes?: object;
+    capabilities: object[];
+    connections?: object[];
+    relationships?: object;
+    cookie?: object;
 }
 
 export enum AlexaSmartHomeCauseType {
@@ -69,15 +82,27 @@ export enum AlexaSmartHomeCauseType {
     VOICE_INTERACTION = "VOICE_INTERACTION"
 }
 
-export interface AlexaSmartHomeCause {
+export type AlexaSmartHomeCause = {
     type: AlexaSmartHomeCauseType;
 }
 
-export interface AlexaSmartHomeChangeReportResponsePayload {
+export type AlexaSmartHomeChangeReportResponsePayload = {
     change: {
       cause : AlexaSmartHomeCause;
       properties: AlexaSmartHomeProperty[];
     };
 }
 
+export type AlexaSmartHomeAddOrUpdateReportResponsePayload = {
+    endpoints: AlexaSmartHomeEndpointDescription[];
+    scope: AlexaSmartHomeScope;
+}
+
+export type AlexaSmartHomeDeleteReportResponsePayload = {
+    endpoints: {endpointId: string}[];
+    scope: AlexaSmartHomeScope;
+}
+
 export type AlexaSmartHomeChangeReportResponse = AlexaSmartHomeResponse<AlexaSmartHomeChangeReportResponsePayload>;
+export type AlexaSmartHomeAddOrUpdateReportResponse = AlexaSmartHomeResponse<AlexaSmartHomeAddOrUpdateReportResponsePayload>;
+export type AlexaSmartHomeDeleteReportResponse = AlexaSmartHomeResponse<AlexaSmartHomeDeleteReportResponsePayload>;

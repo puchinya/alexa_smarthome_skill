@@ -30,7 +30,7 @@ function log(message, message1, message2) {
   console.log(message + message1 + message2);
 }
 
-async function handleAuthorization(request: AlexaSmartHomeAuthorizationRequest, context) : Promise<any> {
+async function handleAuthorizationAsync(request: AlexaSmartHomeAuthorizationRequest, context) : Promise<any> {
   // Send the AcceptGrant response
   const header = request.directive.header;
   header.name = "AcceptGrant.Response";
@@ -56,7 +56,7 @@ async function handleAuthorization(request: AlexaSmartHomeAuthorizationRequest, 
   }
 }
 
-async function handleDiscovery(request : AlexaSmartHomeRequest<object>, context) : Promise<any> {
+async function handleDiscoveryAsync(request : AlexaSmartHomeRequest<object>, context) : Promise<any> {
 
   const requestToken = request.directive.payload.scope.token;
   const jwt = decodeJwt(requestToken);
@@ -131,7 +131,7 @@ async function handleDiscovery(request : AlexaSmartHomeRequest<object>, context)
   return { event: { header: header, payload: payload } };
 }
 
-async function handleReportState(request: AlexaSmartHomeRequest<object>, context) : Promise<AlexaSmartHomeResponse<object>> {
+async function handleReportStateAsync(request: AlexaSmartHomeRequest<object>, context) : Promise<AlexaSmartHomeResponse<object>> {
 
   const requestToken = request.directive.endpoint.scope.token;
   const jwt = decodeJwt(requestToken);
@@ -148,12 +148,12 @@ async function handleReportState(request: AlexaSmartHomeRequest<object>, context
   const deviceInfo = await getDevice(uid, endpointId);
 
   const properties = [
-      {
-    "namespace": "Alexa.PowerController",
-    "name": "powerState",
-    "value": deviceInfo.status["powerState"],
-    "timeOfSample": utc, //retrieve from result.
-    "uncertaintyInMilliseconds": 50
+    {
+      "namespace": "Alexa.PowerController",
+      "name": "powerState",
+      "value": deviceInfo.status["powerState"],
+      "timeOfSample": utc, //retrieve from result.
+      "uncertaintyInMilliseconds": 50
     },
     {
       "namespace": "Alexa.EndpointHealth",
@@ -186,7 +186,7 @@ async function handleReportState(request: AlexaSmartHomeRequest<object>, context
   return response;
 }
 
-async function handlePowerControl(request: AlexaSmartHomeRequest<object>, context) : Promise<any> {
+async function handlePowerControlAsync(request: AlexaSmartHomeRequest<object>, context) : Promise<any> {
 
   const requestToken = request.directive.endpoint.scope.token;
   const jwt = decodeJwt(requestToken);
@@ -260,21 +260,21 @@ async function handlePowerControl(request: AlexaSmartHomeRequest<object>, contex
 const smarthome = async (request, context) : Promise<any> => {
   console.log(`request: ${JSON.stringify(request)}`);
   if (request.directive.header.namespace === 'Alexa.Discovery' && request.directive.header.name === 'Discover') {
-    return await handleDiscovery(request, context);
+    return await handleDiscoveryAsync(request, context);
   }
   else if (request.directive.header.namespace === 'Alexa.PowerController') {
     if (request.directive.header.name === 'TurnOn' || request.directive.header.name === 'TurnOff') {
-      return await handlePowerControl(request, context);
+      return await handlePowerControlAsync(request, context);
     }
   }
   else if (request.directive.header.namespace === 'Alexa') {
     if (request.directive.header.name === 'ReportState') {
-      return await handleReportState(request, context);
+      return await handleReportStateAsync(request, context);
     }
   }
   else if (request.directive.header.namespace === 'Alexa.Authorization' &&
       request.directive.header.name === 'AcceptGrant') {
-    return await handleAuthorization(request, context)
+    return await handleAuthorizationAsync(request, context)
   }
 };
 

@@ -7,6 +7,11 @@ const LWA_CLIENT_SECRET = process.env.LWA_CLIENT_SECRET;
 
 const ALEXA_USER_INFO_TABLE = "alexa_lwa_token_table";
 
+/**
+ *
+ * @param uid
+ * @param tokenResult
+ */
 async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<void> {
     const client = getDynamoDbDocClient();
     const ret = await client.send(new UpdateCommand({
@@ -34,6 +39,11 @@ async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<voi
     return;
 }
 
+/**
+ *
+ * @param uid
+ * @param code
+ */
 export async function issueLwaTokenByCodeAndSaveToDb(uid: string, code: string) : Promise<TokenResult> {
     const tokenResult = await getLwaTokenByCode(LWA_CLIENT_ID, LWA_CLIENT_SECRET, code)
 
@@ -42,6 +52,12 @@ export async function issueLwaTokenByCodeAndSaveToDb(uid: string, code: string) 
     return  tokenResult;
 }
 
+/**
+ *
+ * @param uid
+ * @param tokenResult
+ * @param code
+ */
 async function saveLwaTokenAndCode(uid: string, tokenResult: TokenResult, code: string) : Promise<void> {
     const client = getDynamoDbDocClient();
     const ret = await client.send(new UpdateCommand({
@@ -71,10 +87,15 @@ async function saveLwaTokenAndCode(uid: string, tokenResult: TokenResult, code: 
     return;
 }
 
+/**
+ *
+ * @param uid
+ */
 async function getLwaTokenFromDb(uid: string) : Promise<TokenResult> {
-    const client = getDynamoDbDocClient();
 
     try {
+        const client = getDynamoDbDocClient();
+
         const response = await client.send(new GetCommand({
             TableName: ALEXA_USER_INFO_TABLE,
             Key: {
@@ -92,10 +113,15 @@ async function getLwaTokenFromDb(uid: string) : Promise<TokenResult> {
             access_token_timestamp: item.access_token_timestamp,
         };
     } catch (e) {
-        return null;
+        throw e;
     }
 }
 
+/**
+ *
+ * @param uid
+ * @param forceRefresh
+ */
 export async function getLwaToken(uid: string, forceRefresh: boolean = false) : Promise<TokenResult> {
     const tokenResult = await getLwaTokenFromDb(uid);
     if(tokenResult == null) {

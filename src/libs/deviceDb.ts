@@ -11,7 +11,7 @@ const ALEXA_DEVICE_STATUS_TABLE = "alexa_device_status_table";
 
 export async function registerDevice(uid: string, endpointId: string, status: object) : Promise<void> {
     const client = getDynamoDbDocClient();
-    const ret = await client.send(new PutCommand({
+    await client.send(new PutCommand({
         TableName: ALEXA_DEVICE_STATUS_TABLE,
         Item: {
             uid: uid,
@@ -43,7 +43,7 @@ export async function getDevice(uid: string, endpointId: string) : Promise<Devic
 
 export async function setDeviceStatus(uid: string, endpointId: string, status: object) : Promise<void> {
     const client = getDynamoDbDocClient();
-    const ret = await client.send(new UpdateCommand({
+    await client.send(new UpdateCommand({
         TableName: ALEXA_DEVICE_STATUS_TABLE,
         Key: {
             "uid": uid,
