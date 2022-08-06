@@ -24,7 +24,7 @@ async function saveLwaToken(uid: string, tokenResult: TokenResult) : Promise<voi
         },
         ExpressionAttributeValues: {
             ':refresh_token': tokenResult.refresh_token,
-            ':access_token': tokenResult.refresh_token,
+            ':access_token': tokenResult.access_token,
             ':token_type': tokenResult.token_type,
             ':expires_in': tokenResult.expires_in,
             ':access_token_timestamp': tokenResult.access_token_timestamp
@@ -61,7 +61,7 @@ async function saveLwaTokenAndCode(uid: string, tokenResult: TokenResult, code: 
         ExpressionAttributeValues: {
             ':code': code,
             ':refresh_token': tokenResult.refresh_token,
-            ':access_token': tokenResult.refresh_token,
+            ':access_token': tokenResult.access_token,
             ':token_type': tokenResult.token_type,
             ':expires_in': tokenResult.expires_in,
             ':access_token_timestamp': tokenResult.access_token_timestamp
@@ -96,16 +96,16 @@ async function getLwaTokenFromDb(uid: string) : Promise<TokenResult> {
     }
 }
 
-export async function getLwaAccessToken(uid: string) : Promise<string> {
+export async function getLwaToken(uid: string, forceRefresh: boolean = false) : Promise<TokenResult> {
     const tokenResult = await getLwaTokenFromDb(uid);
     if(tokenResult == null) {
         return null;
     }
-    if(getCurrentTimestamp() >= Math.floor(tokenResult.access_token_timestamp + tokenResult.expires_in * 8 / 10)) {
+    if(forceRefresh || getCurrentTimestamp() >= Math.floor(tokenResult.access_token_timestamp + tokenResult.expires_in * 8 / 10)) {
         const new_token_result = await getLwaTokenByRefreshToken(tokenResult.refresh_token, LWA_CLIENT_ID, LWA_CLIENT_SECRET);
         await saveLwaToken(uid, new_token_result);
-        return new_token_result.access_token;
+        return new_token_result;
     } else {
-        return tokenResult.access_token;
+        return tokenResult;
     }
 }

@@ -61,21 +61,28 @@ interface AlexaSmartHomeSkillResponse {
 
 async function handleAuthorization(request, context) : Promise<any> {
   // Send the AcceptGrant response
-  let payload = {};
   const header = request.directive.header;
   header.name = "AcceptGrant.Response";
 
   const requestToken = request.directive.payload.grantee.token;
-  const jwt = decodeJwt(requestToken);
-  const uid : string = jwt.sub;
+  try {
+    const jwt = decodeJwt(requestToken);
+    const uid: string = jwt.sub;
 
-  const code = request.directive.payload.grant.code;
+    const code = request.directive.payload.grant.code;
 
-  await issueLwaTokenByCodeAndSaveToDb(uid, code);
+    await issueLwaTokenByCodeAndSaveToDb(uid, code);
 
-  log("DEBUG", "AcceptGrant Response: ", JSON.stringify({ header: header, payload: payload }));
+    log("DEBUG", "AcceptGrant Response: ", JSON.stringify({header: header, payload: payload}));
 
-  return { event: { header: header, payload: payload } };
+    return {event: {header: header, payload: {}}};
+  } catch (e) {
+    const payload = {
+      type: "ACCEPT_GRANT_FAILED",
+      message: "failed to get LWA tokens."
+    }
+    return {event: {header: header, payload: payload}};
+  }
 }
 
 function handleDiscovery(request, context) : any {

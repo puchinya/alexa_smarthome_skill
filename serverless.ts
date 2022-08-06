@@ -1,6 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
 import smarthome from '@functions/smarthome';
+import smarthome_report from '@functions/smarthome_report';
 
 const serverlessConfiguration: AWS = {
   service: 'alexa-smarthome-skill',
@@ -24,7 +25,7 @@ const serverlessConfiguration: AWS = {
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { smarthome },
+  functions: { smarthome, smarthome_report },
 
   resources: {
     Resources: {

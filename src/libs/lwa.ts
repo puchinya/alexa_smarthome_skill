@@ -34,6 +34,8 @@ export async function getLwaTokenByCode(client_id: string, client_secret: string
         return null;
     }
 
+    console.log(`lwa_token:${JSON.stringify(response.data)}`);
+
     let result : TokenResult = response.data;
     result.access_token_timestamp = timestamp;
 
