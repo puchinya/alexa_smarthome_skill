@@ -1,4 +1,4 @@
-import {alexaNotifyAddOrUpdateReportEventAsync, alexaNotifyChangeReportEventAsync} from "@libs/alexaSmarthomeReport";
+import {alexaNotifyAddOrUpdateReportEventAsync} from "@libs/alexaSmarthomeReport";
 import {registerDeviceAsync} from "@libs/deviceImplement";
 import {AlexaSmartHomeEndpointDescription} from "@libs/alexaSmartHome";
 

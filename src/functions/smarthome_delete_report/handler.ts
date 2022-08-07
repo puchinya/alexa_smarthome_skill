@@ -1,6 +1,4 @@
 import {
-    alexaNotifyAddOrUpdateReportEventAsync,
-    alexaNotifyChangeReportEventAsync,
     alexaNotifyDeleteReportEventAsync
 } from "@libs/alexaSmarthomeReport";
 
