@@ -2,6 +2,8 @@ import type { AWS } from '@serverless/typescript';
 
 import smarthome from '@functions/smarthome';
 import smarthome_report from '@functions/smarthome_report';
+import smarthome_add_report from '@functions/smarthome_add_report';
+import smarthome_delete_report from "@functions/smarthome_delete_report";
 
 const serverlessConfiguration: AWS = {
   service: 'alexa-smarthome-skill',
@@ -21,11 +23,13 @@ const serverlessConfiguration: AWS = {
     runtime: 'nodejs16.x',
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      LWA_CLIENT_ID: "dummy",
+      LWA_CLIENT_SECRET: "dummy
     },
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { smarthome, smarthome_report },
+  functions: { smarthome, smarthome_report, smarthome_add_report, smarthome_delete_report },
 
   resources: {
     Resources: {

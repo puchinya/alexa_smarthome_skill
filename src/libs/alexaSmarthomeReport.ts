@@ -29,8 +29,8 @@ export async function alexaNotifyAddOrUpdateReportEventAsync(uid: string, endpoi
             "event": {
                 "header": {
                     "messageId": messageId,
-                    "namespace": "Alexa",
-                    "name": "ChangeReport",
+                    "namespace": "Alexa.Discovery",
+                    "name": "AddOrUpdateReport",
                     "payloadVersion": "3"
                 },
                 "payload": {
@@ -66,8 +66,8 @@ export async function alexaNotifyDeleteReportEventAsync(uid: string, endpointIds
             "event": {
                 "header": {
                     "messageId": messageId,
-                    "namespace": "Alexa",
-                    "name": "ChangeReport",
+                    "namespace": "Alexa.Discovery",
+                    "name": "DeleteReport",
                     "payloadVersion": "3"
                 },
                 "payload": {
