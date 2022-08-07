@@ -24,7 +24,7 @@ const serverlessConfiguration: AWS = {
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       LWA_CLIENT_ID: "dummy",
-      LWA_CLIENT_SECRET: "dummy
+      LWA_CLIENT_SECRET: "dummy"
     },
     lambdaHashingVersion: '20201221',
   },
