@@ -35,7 +35,6 @@ async function saveLwaTokenAsync(uid: string, tokenResult: TokenResult) : Promis
             ':access_token_timestamp': tokenResult.access_token_timestamp
         }
     }));
-    console.log(ret);
     return;
 }
 
@@ -49,7 +48,7 @@ export async function issueLwaTokenByCodeAndSaveToDbAsync(uid: string, code: str
 
     await saveLwaTokenAndCodeAsync(uid, tokenResult, code);
 
-    return  tokenResult;
+    return tokenResult;
 }
 
 /**
@@ -83,7 +82,6 @@ async function saveLwaTokenAndCodeAsync(uid: string, tokenResult: TokenResult, c
             ':access_token_timestamp': tokenResult.access_token_timestamp
         }
     }));
-    console.log(ret);
     return;
 }
 
