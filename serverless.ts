@@ -23,8 +23,9 @@ const serverlessConfiguration: AWS = {
     runtime: 'nodejs16.x',
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-      LWA_CLIENT_ID: "dummy",
-      LWA_CLIENT_SECRET: "dummy"
+      LWA_CLIENT_ID: "",
+      LWA_CLIENT_SECRET: "",
+      LWA_TOKEN_MANAGE_TABLE: "alexa_lwa_token_table",
     },
     lambdaHashingVersion: '20201221',
   },

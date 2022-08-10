@@ -10,8 +10,7 @@ import {ResourceNotFoundException} from "@aws-sdk/client-dynamodb";
 
 const LWA_CLIENT_ID = process.env.LWA_CLIENT_ID;
 const LWA_CLIENT_SECRET = process.env.LWA_CLIENT_SECRET;
-
-const ALEXA_USER_INFO_TABLE = "alexa_lwa_token_table";
+const LWA_TOKEN_MANAGE_TABLE = process.env.LWA_TOKEN_MANAGE_TABLE;
 
 
 /**
@@ -22,7 +21,7 @@ const ALEXA_USER_INFO_TABLE = "alexa_lwa_token_table";
 async function saveLwaTokenAsync(uid: string, tokenResult: LwaTokenResult) : Promise<void> {
     const client = getDynamoDbDocClient();
     await client.send(new UpdateCommand({
-        TableName: ALEXA_USER_INFO_TABLE,
+        TableName: LWA_TOKEN_MANAGE_TABLE,
         Key: {
             "uid": uid
         },
@@ -54,7 +53,7 @@ async function removeTokenAsync(uid: string) : Promise<void> {
 
     try {
         await client.send(new DeleteCommand({
-            TableName: ALEXA_USER_INFO_TABLE,
+            TableName: LWA_TOKEN_MANAGE_TABLE,
             Key: {
                 "uid": uid
             },
@@ -88,7 +87,7 @@ export async function issueLwaTokenByCodeAndSaveToDbAsync(uid: string, code: str
 async function saveLwaTokenAndCodeAsync(uid: string, tokenResult: LwaTokenResult, code: string) : Promise<void> {
     const client = getDynamoDbDocClient();
     await client.send(new UpdateCommand({
-        TableName: ALEXA_USER_INFO_TABLE,
+        TableName: LWA_TOKEN_MANAGE_TABLE,
         Key: {
             "uid": uid
         },
@@ -125,7 +124,7 @@ async function getLwaTokenFromDbAsync(uid: string) : Promise<LwaTokenResult> {
         const client = getDynamoDbDocClient();
 
         const response = await client.send(new GetCommand({
-            TableName: ALEXA_USER_INFO_TABLE,
+            TableName: LWA_TOKEN_MANAGE_TABLE,
             Key: {
                 "uid": uid
             }
