@@ -1,5 +1,6 @@
 import {alexaNotifyChangeReportEventAsync} from "@libs/alexaSmarthomeReport";
 import {updateDeviceStatusAsync} from "@libs/deviceImplement";
+import {AlexaSmartHomeCauseType} from "@libs/alexaSmartHome";
 
 interface ReportEvent {
     uid: string
@@ -27,7 +28,8 @@ const smarthome_report = async (event: ReportEvent, context) : Promise<any> => {
         }
     ];
 
-    await alexaNotifyChangeReportEventAsync(event.uid, endpointId, properties, []);
+    await alexaNotifyChangeReportEventAsync(event.uid, endpointId, AlexaSmartHomeCauseType.PERIODIC_POLL,
+        properties, []);
 
     return { status: "OK" };
 }

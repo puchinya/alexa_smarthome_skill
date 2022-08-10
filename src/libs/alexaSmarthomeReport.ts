@@ -164,6 +164,7 @@ export async function alexaNotifyDeleteReportEventAsync(uid: string, endpointIds
  * 発生する例外についてはalexaNotifyAsyncを参照。
  */
 export async function alexaNotifyChangeReportEventAsync(uid: string, endpointId: string,
+                                                        causeType: AlexaSmartHomeCauseType,
                                                         changeProperties:any[], contextProperties:any[]) : Promise<void> {
 
     return await alexaNotifyAsync(uid, (lwaToken, messageId)
@@ -189,7 +190,7 @@ export async function alexaNotifyChangeReportEventAsync(uid: string, endpointId:
                 "payload": {
                     "change": {
                         "cause": {
-                            "type": AlexaSmartHomeCauseType.PHYSICAL_INTERACTION
+                            "type": causeType
                         },
                         "properties": changeProperties
                     }
